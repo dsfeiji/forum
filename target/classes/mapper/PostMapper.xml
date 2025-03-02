@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.forum.mapper.PostMapper">
+
+    <!-- 新增帖子  -->
+    <insert id="insert" parameterType="com.example.forum.entity.Post">
+        INSERT INTO post (
+            user_id,
+            post_title,
+            post_text,
+            create_time,
+            update_time,
+            view_count,
+            like_count,
+            comment_count,
+            is_deleted
+        ) VALUES (
+                     #{userId},
+                     #{postTitle},
+                     #{postText},
+                     #{createTime},
+                     #{updateTime},
+                     #{viewCount},
+                     #{likeCount},
+                     #{commentCount},
+                     #{isDeleted}
+                 )
+    </insert>
+
+</mapper>
