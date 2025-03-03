@@ -1,5 +1,6 @@
 package com.example.forum.controller;
 
+import com.example.forum.Dto.CommentResponseDto;
 import com.example.forum.entity.Comment;
 import com.example.forum.entity.User;
 import com.example.forum.service.ICommentService;
@@ -26,7 +27,7 @@ public class CommentController {
     private IUserService userService;
 
     @PostMapping("/add")
-    public Result<String> addComment(@RequestBody Comment comment, HttpServletRequest request) {
+    public Result<CommentResponseDto> addComment(@RequestBody Comment comment, HttpServletRequest request) {
         try {
             // 从请求头获取 Token
             String token = request.getHeader("Authorization");
@@ -96,7 +97,7 @@ public class CommentController {
     }
 
     @PostMapping("/reply")
-    public Result<String> addReply(@RequestBody Comment comment, HttpServletRequest request) {
+    public Result<CommentResponseDto> addReply(@RequestBody Comment comment, HttpServletRequest request) {
         try {
             String token = request.getHeader("Authorization");
             if (token == null || !token.startsWith("Bearer ")) {
@@ -104,6 +105,19 @@ public class CommentController {
             }
             token = token.substring(7);
             
+            // 从 Token 获取邮箱
+            String email = jwtUtils.getEmailFromToken(token);
+            if (email == null) {
+                return Result.error("Token无效");
+            }
+
+            // 通过邮箱查询用户
+            User user = userService.getUserByEmail(email);
+            if (user == null) {
+                return Result.error("用户不存在");
+            }
+
+            comment.setUserId(user.getUserId());
             return commentService.addReply(comment, token);
         } catch (Exception e) {
             log.error("发布回复失败: {}", e.getMessage());

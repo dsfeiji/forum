@@ -37,13 +37,6 @@ public class Comment implements Serializable {
 
     private Integer postId;
 
-    // 添加父评论ID字段，为空表示是一级评论
-    private Integer parentId;
-    
-    // 添加回复目标用户ID
-    private Integer replyToUserId;
-
-    // 非数据库字段，用于前端显示
     @TableField(exist = false)
     private String username;
 
@@ -52,5 +45,9 @@ public class Comment implements Serializable {
 
     @TableField(exist = false)
     private String replyToUsername;
+
+    private Integer parentId;
+    
+    private Integer replyToUserId;
 
 }

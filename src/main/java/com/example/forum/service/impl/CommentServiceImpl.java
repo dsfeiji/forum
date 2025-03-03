@@ -3,6 +3,7 @@ package com.example.forum.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.forum.Dto.CommentResponseDto;
 import com.example.forum.entity.Comment;
 import com.example.forum.entity.Post;
 import com.example.forum.entity.User;
@@ -32,7 +33,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     private UserMapper userMapper;
 
     @Override
-    public Result<String> addComment(Comment comment) {
+    public Result<CommentResponseDto> addComment(Comment comment) {
         try {
             // 检查评论内容是否为空
             if (comment.getCommentText() == null || comment.getCommentText().trim().isEmpty()) {
@@ -58,7 +59,17 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                 // 更新文章的评论数
                 post.setCommentCount(post.getCommentCount() + 1);
                 postMapper.updateById(post);
-                return Result.success("评论发布成功");
+                
+                // 获取文章的总评论数
+                LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(Comment::getPostId, comment.getPostId());
+                int totalComments = (int) count(queryWrapper);
+                
+                CommentResponseDto responseDto = new CommentResponseDto();
+                responseDto.setMessage("评论发布成功");
+                responseDto.setTotalComments(totalComments);
+                
+                return Result.success("发布成功",responseDto);
             }
 
             return Result.error("评论发布失败");
@@ -232,7 +243,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     }
 
     @Override
-    public Result<String> addReply(Comment comment, String token) {
+    public Result<CommentResponseDto> addReply(Comment comment, String token) {
         try {
             // 检查回复内容
             if (comment.getCommentText() == null || comment.getCommentText().trim().isEmpty()) {
@@ -273,7 +284,17 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                 Post post = postMapper.selectById(comment.getPostId());
                 post.setCommentCount(post.getCommentCount() + 1);
                 postMapper.updateById(post);
-                return Result.success("回复成功");
+
+                // 获取文章的总评论数
+                LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(Comment::getPostId, comment.getPostId());
+                int totalComments = (int) count(queryWrapper);
+                
+                CommentResponseDto responseDto = new CommentResponseDto();
+                responseDto.setMessage("回复成功");
+                responseDto.setTotalComments(totalComments);
+                
+                return Result.success("回复成功",responseDto);
             }
 
             return Result.error("回复失败");
