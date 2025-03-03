@@ -17,7 +17,7 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2025-02-18
  */
 public interface IUserService extends IService<User> {
-    String sendVerificationCode(User user);
+    Result<String> sendVerificationCode(User user);
     Result<String> register(UserDto userDto);
     Result<UserVo> login(User user);
     Result<String> user(User user);

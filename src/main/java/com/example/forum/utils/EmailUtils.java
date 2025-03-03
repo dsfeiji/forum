@@ -41,11 +41,11 @@ public class EmailUtils {
      * @param email 收件人邮箱
      * @return 是否发送成功（如果已经存在未过期的验证码，则返回 false）
      */
-    public String sendVerificationCode(String email) {
+    public Result<String> sendVerificationCode(String email) {
         // 检查是否已经存在未过期的验证码
         if (hasActiveVerificationCode(email)) {
             System.out.println("请不要重复发送验证码");
-            return "发送失败，请不要重复发送"; // 如果存在未过期的验证码，直接返回 false
+            return Result.error("发送失败，请不要重复发送"); // 如果存在未过期的验证码，直接返回 false
         }
 
         // 生成验证码
@@ -82,7 +82,7 @@ public class EmailUtils {
             // 存储验证码，设置过期时间为 5 分钟
             storeVerificationCode(email, verificationCode, 5);
 
-            return "发送成功"; // 发送成功
+            return Result.success("发送成功"); // 发送成功
         } catch (MessagingException e) {
             throw new RuntimeException("Failed to send email", e);
         }

@@ -29,8 +29,8 @@ public class UserController {
     @PostMapping("/sendVerificationCode")
     public Result<String> sendVerificationCode(@RequestBody User user) {
         System.out.println(user);
-        String msg = userService.sendVerificationCode(user);
-        return  Result.success(msg);
+
+        return  userService.sendVerificationCode(user);
     }
 
     @PostMapping("/register")

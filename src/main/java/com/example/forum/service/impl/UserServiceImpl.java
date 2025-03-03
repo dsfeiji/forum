@@ -39,7 +39,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     private static final Log log = LogFactory.get();
 
     @Override
-    public String sendVerificationCode(User user) {
+    public Result<String> sendVerificationCode(User user) {
         // 生成验证码
 
         // 将验证码存储到内存中
