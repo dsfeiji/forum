@@ -30,6 +30,7 @@ import java.util.Random;
  */
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
+    @Autowired
     private UserMapper userMapper;
     @Autowired
     private JwtUtils jwtUtils;
@@ -69,7 +70,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             Random ra = new Random();
             //生成5位随机数
             int randomNumber = 10000 + ra.nextInt(90000);
-            userInfo.setUsername("用户"+randomNumber);
+            String name ="用户"+randomNumber;
+            userInfo.setUsername(name);
+            userDto.setUsername(name);
             boolean flag = save(userInfo);
 
             // 返回注册结果
@@ -81,15 +84,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public Result<UserVo> login(User user) {
+        System.out.println(user);
         String email = user.getEmail();
         String password = user.getPassword();
         // 判断是否查询到用户
         if (validateUserCredentials(email, password)) {
+            // 获取完整的用户信息
+            User completeUser = getUserByEmail(email);
             UserVo userInfoVo = new UserVo();
             // 使用 Hutool 的 BeanUtil.copyProperties 进行对象拷贝
-            BeanUtil.copyProperties(user, userInfoVo); // 将 user 的属性拷贝到 userInfoVo
+            BeanUtil.copyProperties(completeUser, userInfoVo); // 将完整的用户信息拷贝到 userInfoVo
             log.info("登录成功");
-            return Result.success(jwtUtils.generateToken(user.getEmail(),user.getUserId()),userInfoVo);
+            return Result.success(jwtUtils.generateToken(completeUser.getEmail(), completeUser.getUserId()), userInfoVo);
         }
         log.info("登录失败");
         return Result.error("登录失败，邮箱或密码错误");
