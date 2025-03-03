@@ -3,6 +3,7 @@ package com.example.forum.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableField;
 import java.time.LocalDateTime;
 import java.io.Serializable;
 import lombok.Data;
@@ -36,5 +37,20 @@ public class Comment implements Serializable {
 
     private Integer postId;
 
+    // 添加父评论ID字段，为空表示是一级评论
+    private Integer parentId;
+    
+    // 添加回复目标用户ID
+    private Integer replyToUserId;
+
+    // 非数据库字段，用于前端显示
+    @TableField(exist = false)
+    private String username;
+
+    @TableField(exist = false)
+    private Integer replyCount;
+
+    @TableField(exist = false)
+    private String replyToUsername;
 
 }
