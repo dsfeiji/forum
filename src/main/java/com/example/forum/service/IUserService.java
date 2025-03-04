@@ -6,7 +6,6 @@ import com.example.forum.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.forum.utils.Result;
 import com.example.forum.vo.UserVo;
-import org.apache.ibatis.annotations.Mapper;
 
 /**
  * <p>
@@ -18,9 +17,20 @@ import org.apache.ibatis.annotations.Mapper;
  */
 public interface IUserService extends IService<User> {
     Result<String> sendVerificationCode(User user);
+    
     Result<String> register(UserDto userDto);
+    
     Result<UserVo> login(User user);
-    Result<String> user(User user);
-    boolean validateUserCredentials(String email, String password);
+    
+    Result<String> user(User user, String token);
+    
+    /**
+     * 更新用户信息
+     */
+    Result<String> updateUserInfo(User user, String token);
+    
+    /**
+     * 通过邮箱获取用户信息
+     */
     User getUserByEmail(String email);
 }

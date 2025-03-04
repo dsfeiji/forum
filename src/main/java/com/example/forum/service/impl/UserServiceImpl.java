@@ -115,12 +115,83 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             return true;
         }
     }
-
+    /**
+     * 更新用户信息
+     */
     @Override
-    public Result<String> user(User user) {
+    public Result<String> updateUserInfo(User user, String token) {
+        try {
+            // 验证token
+            String email = jwtUtils.getEmailFromToken(token);
+            if (email == null) {
+                return Result.error("Token无效");
+            }
+            
+            // 获取当前登录用户
+            User currentUser = getUserByEmail(email);
+            if (currentUser == null) {
+                return Result.error("用户不存在");
+            }
+            
+            // 验证用户权限（确保只能修改自己的信息）
+            if (!currentUser.getUserId().equals(user.getUserId())) {
+                return Result.error("无权修改他人信息");
+            }
+            
+            // 创建要更新的用户对象
+            User updateUser = new User();
+            updateUser.setUserId(user.getUserId());
+            
+            // 检查是否有要更新的字段
+            boolean hasUpdates = false;
+            
+            // 更新用户名（如果提供了新的用户名）
+            if (user.getUsername() != null && !user.getUsername().trim().isEmpty()) {
+                updateUser.setUsername(user.getUsername());
+                hasUpdates = true;
+            }
+            
+            // 更新生日（如果提供了新的生日）
+            if (user.getBirthday() != null) {
+                updateUser.setBirthday(user.getBirthday());
+                hasUpdates = true;
+            }
+            
+            // 如果没有要更新的字段，返回错误
+            if (!hasUpdates) {
+                return Result.error("没有要更新的信息");
+            }
+            
+            // 执行更新操作
+            boolean success = updateById(updateUser);
+            if (success) {
+                return Result.success("修改成功");
+            } else {
+                return Result.error("修改失败");
+            }
+        } catch (Exception e) {
+            log.error("修改用户信息失败: {}", e.getMessage());
+            return Result.error("修改用户信息失败：" + e.getMessage());
+        }
+    }
+    @Override
+    public Result<String> user(User user,String token) {
+        // 检查用户是否存在
+        User existingUser = getById(user.getUserId());
+        if (existingUser == null) {
+            return Result.error("用户不存在");
+        }
+        
+        // 使用正确的字段名 user_id
         UpdateWrapper<User> updateWrapper = new UpdateWrapper<>();
-        updateWrapper.eq("id", user.getUserId())
+        updateWrapper.eq("user_id", user.getUserId())
                 .set("username", user.getUsername());
+                
+        // 如果有其他字段需要更新，可以在这里添加
+        if (user.getBirthday() != null) {
+            updateWrapper.set("birthday", user.getBirthday());
+        }
+        
         int rows = userMapper.update(null, updateWrapper);
         if (rows > 0) {
             return Result.success("修改成功");
@@ -128,7 +199,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             return Result.error("修改失败");
         }
     }
-    
     @Override
     public User getUserByEmail(String email) {
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
