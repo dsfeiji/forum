@@ -159,17 +159,22 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             if (post == null) {
                 return Result.error("文章不存在");
             }
-
+    
             // 分页查询评论
             Page<Comment> page = new Page<>(pageNum, pageSize);
             LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(Comment::getPostId, postId)
                     .isNull(Comment::getParentId)  // 只查询一级评论
                     .orderByDesc(Comment::getCommentDate);
-
+    
             Page<Comment> commentPage = page(page, queryWrapper);
             List<Comment> comments = commentPage.getRecords();
-
+            
+            // 如果没有评论，直接返回空列表
+            if (comments.isEmpty()) {
+                return Result.success("暂无评论", comments);
+            }
+    
             // 查询每个评论的回复数量和评论者信息
             for (Comment comment : comments) {
                 // 设置评论者信息
@@ -177,29 +182,28 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                 if (user != null) {
                     comment.setUsername(user.getUsername());
                 }
-
+    
                 // 查询回复数量
                 LambdaQueryWrapper<Comment> replyWrapper = new LambdaQueryWrapper<>();
                 replyWrapper.eq(Comment::getParentId, comment.getCommentId());
                 int replyCount = (int) count(replyWrapper);
                 comment.setReplyCount(replyCount);
-
+    
                 // 如果是回复类型的评论，设置回复目标用户名
                 if (comment.getReplyToUserId() != null) {
                     User replyToUser = userMapper.selectById(comment.getReplyToUserId());
                     if (replyToUser != null) {
                         comment.setReplyToUsername(replyToUser.getUsername());
                     }
-                }
+                   }
             }
-
+    
             return Result.success("查询成功", comments);
         } catch (Exception e) {
             log.error("查询评论失败: {}", e.getMessage());
             return Result.error("查询评论失败：" + e.getMessage());
         }
     }
-
     @Override
     public Result<List<Comment>> getRepliesByCommentId(Integer commentId, Integer pageNum, Integer pageSize) {
         try {
@@ -208,16 +212,21 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             if (parentComment == null) {
                 return Result.error("评论不存在");
             }
-
+    
             // 分页查询回复
             Page<Comment> page = new Page<>(pageNum, pageSize);
             LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(Comment::getParentId, commentId)
                     .orderByAsc(Comment::getCommentDate);
-
+    
             Page<Comment> commentPage = page(page, queryWrapper);
             List<Comment> replies = commentPage.getRecords();
-
+    
+            // 如果没有回复，直接返回空列表
+            if (replies.isEmpty()) {
+                return Result.success("暂无回复", replies);
+            }
+    
             // 设置回复的用户信息
             for (Comment reply : replies) {
                 // 设置评论者信息
@@ -225,7 +234,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                 if (user != null) {
                     reply.setUsername(user.getUsername());
                 }
-
+    
                 // 设置回复目标用户信息
                 if (reply.getReplyToUserId() != null) {
                     User replyToUser = userMapper.selectById(reply.getReplyToUserId());
@@ -234,7 +243,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                     }
                 }
             }
-
+    
             return Result.success("查询成功", replies);
         } catch (Exception e) {
             log.error("查询回复失败: {}", e.getMessage());
@@ -249,17 +258,17 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             if (comment.getCommentText() == null || comment.getCommentText().trim().isEmpty()) {
                 return Result.error("回复内容不能为空");
             }
-
+    
             if (comment.getCommentText().length() > 500) {
                 return Result.error("回复内容不能超过500字");
             }
-
+    
             // 检查父评论是否存在
             Comment parentComment = getById(comment.getParentId());
             if (parentComment == null) {
                 return Result.error("要回复的评论不存在");
             }
-
+    
             // 设置文章ID
             comment.setPostId(parentComment.getPostId());
             
@@ -274,29 +283,29 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             
             // 设置回复目标用户ID
             comment.setReplyToUserId(parentComment.getUserId());
-
+    
             // 设置评论时间
             comment.setCommentDate(LocalDateTime.now());
-
+    
             // 保存回复
             if (save(comment)) {
                 // 更新文章的评论数
                 Post post = postMapper.selectById(comment.getPostId());
                 post.setCommentCount(post.getCommentCount() + 1);
                 postMapper.updateById(post);
-
+    
                 // 获取文章的总评论数
                 LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
                 queryWrapper.eq(Comment::getPostId, comment.getPostId());
                 int totalComments = (int) count(queryWrapper);
-                
+    
                 CommentResponseDto responseDto = new CommentResponseDto();
                 responseDto.setMessage("回复成功");
                 responseDto.setTotalComments(totalComments);
-                
+    
                 return Result.success("回复成功",responseDto);
             }
-
+    
             return Result.error("回复失败");
         } catch (Exception e) {
             log.error("发布回复失败: {}", e.getMessage());
