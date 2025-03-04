@@ -19,14 +19,9 @@ import java.util.List;
 public interface ILikeRecordService extends IService<LikeRecord> {
     
     /**
-     * 添加点赞记录
+     * 点赞/取消点赞切换
      */
-    Result<String> addLike(LikeRecord likeRecord);
-    
-    /**
-     * 取消点赞
-     */
-    Result<String> removeLike(LikeRecord likeRecord);
+    Result<String> toggleLike(LikeRecord likeRecord);
     
     /**
      * 查询用户是否点赞了某篇文章

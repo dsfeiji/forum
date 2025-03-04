@@ -40,7 +40,7 @@ public class LikeRecordServiceImpl extends ServiceImpl<LikeRecordMapper, LikeRec
 
     @Override
     @Transactional
-    public Result<String> addLike(LikeRecord likeRecord) {
+    public Result<String> toggleLike(LikeRecord likeRecord) {
         try {
             // 检查文章是否存在
             Post post = postMapper.selectById(likeRecord.getPostId());
@@ -54,69 +54,45 @@ public class LikeRecordServiceImpl extends ServiceImpl<LikeRecordMapper, LikeRec
                     .eq(LikeRecord::getPostId, likeRecord.getPostId());
             LikeRecord existingRecord = getOne(queryWrapper);
             
+            // 如果已经点赞，则取消点赞
             if (existingRecord != null) {
-                return Result.error("已经点赞过该文章");
-            }
-            
-            // 设置点赞时间
-            likeRecord.setCreateTime(LocalDateTime.now());
-            
-            // 保存点赞记录
-            if (save(likeRecord)) {
-                // 更新文章的点赞数
-                Integer currentLikeCount = post.getLikeCount();
-                post.setLikeCount(currentLikeCount == null ? 1 : currentLikeCount + 1);
-                postMapper.updateById(post);
-                return Result.success("点赞成功");
-            }
-            
-            return Result.error("点赞失败");
-        } catch (Exception e) {
-            log.error("点赞失败: {}", e.getMessage());
-            return Result.error("点赞失败：" + e.getMessage());
-        }
-    }
-
-    @Override
-    @Transactional
-    public Result<String> removeLike(LikeRecord likeRecord) {
-        try {
-            // 检查文章是否存在
-            Post post = postMapper.selectById(likeRecord.getPostId());
-            if (post == null) {
-                return Result.error("文章不存在");
-            }
-            
-            // 查找点赞记录
-            LambdaQueryWrapper<LikeRecord> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(LikeRecord::getUserId, likeRecord.getUserId())
-                    .eq(LikeRecord::getPostId, likeRecord.getPostId());
-            LikeRecord existingRecord = getOne(queryWrapper);
-            
-            if (existingRecord == null) {
-                return Result.error("未点赞该文章");
-            }
-            
-            // 删除点赞记录
-            if (remove(queryWrapper)) {
-                // 更新文章的点赞数
-                Integer currentLikeCount = post.getLikeCount();
-                if (currentLikeCount != null && currentLikeCount > 0) {
-                    post.setLikeCount(currentLikeCount - 1);
-                    postMapper.updateById(post);
+                // 删除点赞记录
+                if (remove(queryWrapper)) {
+                    // 更新文章的点赞数
+                    Integer currentLikeCount = post.getLikeCount();
+                    if (currentLikeCount != null && currentLikeCount > 0) {
+                        post.setLikeCount(currentLikeCount - 1);
+                        postMapper.updateById(post);
+                    }
+                    return Result.success("取消点赞成功");
                 }
-                return Result.success("取消点赞成功");
+                return Result.error("取消点赞失败");
+            } 
+            // 如果未点赞，则添加点赞
+            else {
+                // 设置点赞时间
+                likeRecord.setCreateTime(LocalDateTime.now());
+                
+                // 保存点赞记录
+                if (save(likeRecord)) {
+                    // 更新文章的点赞数
+                    Integer currentLikeCount = post.getLikeCount();
+                    post.setLikeCount(currentLikeCount == null ? 1 : currentLikeCount + 1);
+                    postMapper.updateById(post);
+                    return Result.success("点赞成功");
+                }
+                return Result.error("点赞失败");
             }
-            
-            return Result.error("取消点赞失败");
         } catch (Exception e) {
-            log.error("取消点赞失败: {}", e.getMessage());
-            return Result.error("取消点赞失败：" + e.getMessage());
+            log.error("点赞操作失败: {}", e.getMessage());
+            return Result.error("点赞操作失败：" + e.getMessage());
         }
     }
 
+    // 其他方法保持不变
     @Override
     public Result<Boolean> checkUserLiked(Integer userId, Integer postId) {
+        // 保持原有实现不变
         try {
             // 查找点赞记录
             LambdaQueryWrapper<LikeRecord> queryWrapper = new LambdaQueryWrapper<>();
@@ -133,6 +109,7 @@ public class LikeRecordServiceImpl extends ServiceImpl<LikeRecordMapper, LikeRec
 
     @Override
     public Result<List<Post>> getLikedPostsByUserId(Integer userId, Integer pageNum, Integer pageSize) {
+        // 保持原有实现不变
         try {
             // 检查用户是否存在
             User user = userMapper.selectById(userId);
@@ -177,6 +154,7 @@ public class LikeRecordServiceImpl extends ServiceImpl<LikeRecordMapper, LikeRec
 
     @Override
     public Result<List<User>> getLikedUsersByPostId(Integer postId, Integer pageNum, Integer pageSize) {
+        // 保持原有实现不变
         try {
             // 检查文章是否存在
             Post post = postMapper.selectById(postId);
@@ -218,6 +196,7 @@ public class LikeRecordServiceImpl extends ServiceImpl<LikeRecordMapper, LikeRec
 
     @Override
     public Result<Integer> getPostLikeCount(Integer postId) {
+        // 保持原有实现不变
         try {
             // 检查文章是否存在
             Post post = postMapper.selectById(postId);

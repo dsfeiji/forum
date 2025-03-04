@@ -34,18 +34,11 @@ public class LikeRecordController {
     @Autowired
     private IUserService userService;
 
-    // 删除这两个错误的注入
-    // @Autowired
-    // private Post post;
-    // 
-    // @Autowired
-    // private IPostService postService;
-
     /**
-     * 点赞文章
+     * 点赞/取消点赞切换
      */
-    @PostMapping("/like")
-    public Result<String> addLike(@RequestBody LikeRecord likeRecord, HttpServletRequest request) {
+    @PostMapping("/toggle")
+    public Result<String> toggleLike(@RequestBody LikeRecord likeRecord, HttpServletRequest request) {
         try {
             String token = request.getHeader("Authorization");
             if (token == null || !token.startsWith("Bearer ")) {
@@ -64,45 +57,9 @@ public class LikeRecordController {
             }
 
             likeRecord.setUserId(user.getUserId());
-            return likeRecordService.addLike(likeRecord);
+            return likeRecordService.toggleLike(likeRecord);
         } catch (Exception e) {
-            return Result.error("点赞失败：" + e.getMessage());
-        }
-    }
-
-    /**
-     * 取消点赞
-     */
-    @DeleteMapping("/unlike")
-    public Result<String> removeLike(@RequestBody LikeRecord likeRecord, HttpServletRequest request) {
-        try {
-            String token = request.getHeader("Authorization");
-            if (token == null || !token.startsWith("Bearer ")) {
-                return Result.error("未登录");
-            }
-            token = token.substring(7);
-
-            String email = jwtUtils.getEmailFromToken(token);
-            if (email == null) {
-                return Result.error("Token无效");
-            }
-
-            User user = userService.getUserByEmail(email);
-            if (user == null) {
-                return Result.error("用户不存在");
-            }
-            
-            // 删除这段错误代码
-            // Integer currentLikeCount = post.getLikeCount();
-            // if (currentLikeCount != null && currentLikeCount > 0) {
-            // post.setLikeCount(currentLikeCount - 1);
-            // postMapper.updateById(post);
-            // }
-
-            likeRecord.setUserId(user.getUserId());
-            return likeRecordService.removeLike(likeRecord);
-        } catch (Exception e) {
-            return Result.error("取消点赞失败：" + e.getMessage());
+            return Result.error("点赞操作失败：" + e.getMessage());
         }
     }
 
