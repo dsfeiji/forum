@@ -32,6 +32,23 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 处理文件操作异常
+     */
+    @ExceptionHandler(java.io.IOException.class)
+    public Result<String> handleIOException(java.io.IOException e) {
+        log.error("文件操作失败: {}", e.getMessage());
+        return Result.error("文件操作失败: " + e.getMessage());
+    }
+    
+    /**
+     * 处理资源不存在异常
+     */
+    @ExceptionHandler(org.springframework.web.servlet.NoHandlerFoundException.class)
+    public Result<String> handleNoHandlerFoundException(org.springframework.web.servlet.NoHandlerFoundException e) {
+        log.error("资源不存在: {}", e.getMessage());
+        return Result.error("请求的资源不存在");
+    }
+    /**
      * 处理所有其他未捕获的异常
      */
     @ExceptionHandler(Exception.class)

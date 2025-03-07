@@ -25,11 +25,9 @@ public class PostDto implements Serializable {
     private Integer userId;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    private String coverImage; // 添加封面图片URL字段
     private Integer viewCount;
     private Integer likeCount;
     private Integer commentCount;
-    private Boolean isDeleted;
-    
-    private String authorName;
-
+    private String authorName; // 作者名称
 }

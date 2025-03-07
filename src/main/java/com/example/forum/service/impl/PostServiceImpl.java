@@ -73,6 +73,11 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
             post.setCommentCount(0);
             post.setIsDeleted(false);
             
+            // 设置封面图片
+            if (StrUtil.isNotBlank(postDto.getCoverImage())) {
+                post.setCoverImage(postDto.getCoverImage());
+            }
+            
             // 检查标题长度
             if (post.getPostTitle().length() > 100) {
                 return Result.error("标题长度不能超过100个字符");
@@ -93,6 +98,72 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
             log.error("发布文章失败: {}", e.getMessage());
             return Result.error("发布失败：" + e.getMessage());
         }
+    }
+
+    @Override
+    public Result<String> revise(PostDto postDto) {
+        if (validatePostDto(postDto)) {
+            return Result.error("请求参数不完整");
+        }
+        
+        try {
+            // 从 Token 获取邮箱
+            String email = jwtUtils.getEmailFromToken(postDto.getJwt());
+            if (email == null) {
+                return Result.error("Token无效");
+            }
+
+            // 通过邮箱查询用户
+            User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
+                    .eq(User::getEmail, email));
+            if (user == null) {
+                return Result.error("用户不存在");
+            }
+            Integer userId = user.getUserId();
+            
+            // 检查文章是否存在
+            Post existingPost = getById(postDto.getPostId());
+            if (existingPost == null) {
+                return Result.error("文章不存在");
+            }
+            
+            // 检查权限
+            if (!existingPost.getUserId().equals(userId)) {
+                return Result.error("无权修改此文章");
+            }
+            
+            Post post = new Post();
+            BeanUtil.copyProperties(postDto, post);
+            post.setUpdateTime(LocalDateTime.now());
+            
+            // 设置封面图片
+            if (StrUtil.isNotBlank(postDto.getCoverImage())) {
+                post.setCoverImage(postDto.getCoverImage());
+            }
+            
+            updateById(post);
+            return Result.success("更新成功");
+        } catch (Exception e) {
+            log.error("修改文章失败: {}", e.getMessage());
+            return Result.error("修改失败：" + e.getMessage());
+        }
+    }
+
+    private PostDto convertToDto(Post post) {
+        if (post == null) {
+            return null;
+        }
+        
+        PostDto postDto = new PostDto();
+        BeanUtil.copyProperties(post, postDto);
+        
+        // 获取作者信息
+        User user = userMapper.selectById(post.getUserId());
+        if (user != null) {
+            postDto.setAuthorName(user.getUsername());
+        }
+        
+        return postDto;
     }
 
     @Override
@@ -155,50 +226,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
         } catch (Exception e) {
             log.error("查询文章失败: {}", e.getMessage());
             return Result.error("查询失败：" + e.getMessage());
-        }
-    }
-
-    @Override
-    public Result<String> revise(PostDto postDto) {
-        if (validatePostDto(postDto)) {
-            return Result.error("请求参数不完整");
-        }
-        
-        try {
-            // 从 Token 获取邮箱
-            String email = jwtUtils.getEmailFromToken(postDto.getJwt());
-            if (email == null) {
-                return Result.error("Token无效");
-            }
-
-            // 通过邮箱查询用户
-            User user = userMapper.selectOne(new LambdaQueryWrapper<User>()
-                    .eq(User::getEmail, email));
-            if (user == null) {
-                return Result.error("用户不存在");
-            }
-            Integer userId = user.getUserId();
-            
-            // 检查文章是否存在
-            Post existingPost = getById(postDto.getPostId());
-            if (existingPost == null) {
-                return Result.error("文章不存在");
-            }
-            
-            // 检查权限
-            if (!existingPost.getUserId().equals(userId)) {
-                return Result.error("无权修改此文章");
-            }
-            
-            Post post = new Post();
-            BeanUtil.copyProperties(postDto, post);
-            post.setUpdateTime(LocalDateTime.now());
-            
-            updateById(post);
-            return Result.success("更新成功");
-        } catch (Exception e) {
-            log.error("修改文章失败: {}", e.getMessage());
-            return Result.error("修改失败：" + e.getMessage());
         }
     }
 
@@ -307,23 +334,6 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements IP
         queryWrapper.eq(Post::getUserId, userId)
                 .eq(Post::getPostTitle, title);
         return baseMapper.selectCount(queryWrapper) > 0;
-    }
-
-    private PostDto convertToDto(Post post) {
-        if (post == null) {
-            return null;
-        }
-        
-        PostDto postDto = new PostDto();
-        BeanUtil.copyProperties(post, postDto);
-        
-        // 获取作者信息
-        User user = userMapper.selectById(post.getUserId());
-        if (user != null) {
-            postDto.setAuthorName(user.getUsername());
-        }
-        
-        return postDto;
     }
 
     // 添加工具方法用于验证请求

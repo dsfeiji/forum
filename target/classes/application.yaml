@@ -22,6 +22,10 @@ spring:
     url: jdbc:mysql://localhost:3306/forum
     username: root
     password: zxcvg123
+  servlet:
+    multipart:
+          max-file-size: 10MB
+          max-request-size: 10MB
 
 mybatis-plus:
   configuration:
@@ -32,3 +36,10 @@ jwt:
   expiration: 86400000  # 24 小时（单位：毫秒）
 server:
   port: 8080
+  servlet:
+    context-path: /api
+# 文件上传配置
+file:
+  upload-dir: c:/Users/23151/Desktop/后端/forum/uploads/images
+  access-url: /images
+

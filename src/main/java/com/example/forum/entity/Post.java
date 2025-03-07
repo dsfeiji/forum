@@ -37,6 +37,7 @@ public class Post implements Serializable {
     private String postText;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    private String coverImage;
 
     @TableField(value = "view_count", fill = FieldFill.INSERT)
     private Integer viewCount = 0;
